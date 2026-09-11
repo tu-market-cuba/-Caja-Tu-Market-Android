@@ -1,0 +1,50 @@
+name: Compilar Caja Tu Market v1.1.5 combos
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Caja-Tu-Market-Android-Proyecto-1.1.5.zip
+      - .github/workflows/build-apk-v1.1.5.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Abrir proyecto correcto 1.1.5
+        run: |
+          rm -rf build-source
+          mkdir build-source
+          unzip -q Caja-Tu-Market-Android-Proyecto-1.1.5.zip -d build-source
+
+      - name: Compilar APK 1.1.5
+        working-directory: build-source/TuMarketAndroid
+        run: gradle assembleDebug
+
+      - name: Verificar que contiene combos e inventario
+        run: |
+          unzip -p build-source/TuMarketAndroid/app/build/outputs/apk/debug/app-debug.apk assets/web/caja.html > caja-compilada.html
+          grep -q 'v1.1.5' caja-compilada.html
+          grep -q 'tm_register_pos_sale' caja-compilada.html
+
+      - name: Publicar APK correcto
+        uses: actions/upload-artifact@v4
+        with:
+          name: Caja-Tu-Market-v1.1.5-COMBOS
+          path: build-source/TuMarketAndroid/app/build/outputs/apk/debug/app-debug.apk
+
